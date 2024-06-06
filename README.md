@@ -132,6 +132,82 @@ Identify Outliers/Anomalies if any
 
 Splitting Data: The whole data set will be divided into two parts – testing set and training set
 
+# PROGRAM:
+```py
+import pandas as pd
+
+file_path = '/mnt/data/survey lung cancer.csv'
+df = pd.read_csv(file_path)
+
+
+print(df.head())
+
+
+print(df.columns)
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+print(df.isnull().sum())
+
+
+df = df.dropna()
+
+
+print(df['LUNG_CANCER'].unique())
+
+df['LUNG_CANCER'] = df['LUNG_CANCER'].apply(lambda x: 1 if x == 'YES' else 0)
+
+
+X = df.drop('LUNG_CANCER', axis=1)
+y = df['LUNG_CANCER']
+
+X = pd.get_dummies(X, drop_first=True)
+
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+
+model = Sequential()
+model.add(Dense(64, input_dim=X_train.shape[1], activation='relu'))
+model.add(Dense(32, activation='relu'))
+model.add(Dense(1, activation='sigmoid'))
+
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+history = model.fit(X_train, y_train, epochs=50, batch_size=32, validation_split=0.2)
+# Evaluate the model
+loss, accuracy = model.evaluate(X_test, y_test)
+print(f'Test Accuracy: {accuracy * 100:.2f}%')
+
+
+y_pred = (model.predict(X_test) > 0.5).astype("int32")
+
+print(y_pred[:10])
+# Save the model
+model.save('lung_cancer_detection_model.h5')
+
+from tensorflow.keras.models import load_model
+loaded_model = load_model('lung_cancer_detection_model.h5')
+
+from sklearn.metrics import classification_report, confusion_matrix
+
+
+cm = confusion_matrix(y_test, y_pred)
+print(cm)
+
+
+cr = classification_report(y_test, y_pred)
+print(cr)
+```
+
 # OUTPUT:
 
 CONFUSION MATRIX
